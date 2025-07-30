@@ -4,7 +4,7 @@ const colors = require('colors');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
-const connectDB = require('./Config/Db');
+const { connectDB } = require('./Config/Db');
 const CodeRoute = require('./Routes/CodeRoute');
 const FileRoute = require("./Routes/FileRoute");
 
@@ -22,7 +22,7 @@ const app = express();
 
 
 //Setup Middlewares...
-app.use(express());
+// app.use(express());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());

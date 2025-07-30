@@ -1,38 +1,36 @@
 const mongoose = require('mongoose');
 
 const fileSchema = new mongoose.Schema({
-    accessCode: {
-        type: Number,
-        required: false
-    },
-    filename: {
-        type: String,
-        required: false,
-    },
-    contentType: {
-        type: String,
-        required: false,
-    },
-    encoding: {
-        type: String,
-        required: false
-    },
-    mimeType: {
-        type: String,
-        required: false
-    },
-    fileSize: {
-        type: Number,
-        required: false,
-    },
-    chunkSize: {
-        type: Number,
-        required: false
-    },
-    bucketName: {
-        type: String,
-        required: false,
-    },
+  accessCode: {
+    type: Number,
+    required: true,
+    unique: true,
+  },
+  filename: {
+    type: String,
+    required: true,
+  },
+  contentType: {
+    type: String,
+    required: true,
+  },
+  encoding: {
+    type: String,
+    required: false,
+  },
+  fileSize: {
+    type: Number,
+    required: true,
+  },
+  path: {
+    type: String,
+    required: true, 
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    expires: 3600, 
+  },
 });
 
 const FileModel = mongoose.model('File', fileSchema);

@@ -52,7 +52,6 @@ const uploadCodeController = async (req, res) => {
 const getCodeController = async (req, res) => {
     try {
         const code = req.params.code;
-        console.log("income data :",code);
         
         //Check Code found or not...
         if (!code) {
