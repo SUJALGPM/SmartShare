@@ -35,7 +35,6 @@
     "multer-gridfs-storage": "^5.0.2",
     "nodemailer": "^6.9.12",
     "npm": "^10.5.0",
-    "path": "^0.12.7",
-    "sharp": "^0.33.2"
+    "path": "^0.12.7"
   }
 }
