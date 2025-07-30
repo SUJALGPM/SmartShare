@@ -38,5 +38,5 @@ const fileSchema = new mongoose.Schema({
 });
 
 
-const fileModel = mongoose.model('securedData', fileSchema);
+const fileModel = mongoose.model('codes', fileSchema);
 module.exports = fileModel;
