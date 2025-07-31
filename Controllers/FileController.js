@@ -1,6 +1,7 @@
 const { supabase } = require("../Config/Db");
 const multer = require("multer");
 const FileModel = require("../Models/FileModel");
+const { Readable } = require("stream");
 
 //File Store Controller....
 const fileStoreController = async (req, res) => {
@@ -78,47 +79,106 @@ const fileStoreController = async (req, res) => {
 };
 
 //File retireve Controller...
+// const fileRetreiveController = async (req, res) => {
+//   try {
+//     const { code } = req.body;
+//     console.log("code :",code);
+    
+
+//     // check code is getting or not?
+//     if (!code) {
+//       return res.status(400).json({ success: false, message: "Access code is required." });
+//     }
+    
+//     // Check file is present or not in database...
+//     const fileDoc = await FileModel.findOne({ accessCode: code });
+//     if (!fileDoc) {
+//       return res.status(404).json({ success: false, message: "File not found with this code." });
+//     }
+
+//     // Get public URL from Supabase
+//     const { data, error } = await supabase.storage
+//       .from("croma")
+//       .getPublicUrl(fileDoc.path);
+
+//     // check for errors..
+//     if (error) {
+//       return res.status(500).json({ success: false, message: "Error getting file URL." });
+//     }
+
+//     // // Delete file from Supabase
+//     // await supabase.storage.from("croma").remove([fileDoc.path]);
+
+//     // // Delete document from MongoDB
+//     // await FileModel.deleteOne({ _id: fileDoc._id });
+
+//     res.status(200).json({
+//       success: true,
+//       message: "File ready to download. It will be deleted after this.",
+//       fileUrl: data.publicUrl,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ success: false, message: "Error retrieving file." });
+//   }
+// };
+
 const fileRetreiveController = async (req, res) => {
   try {
     const { code } = req.body;
+    console.log("Received code:", code);
 
-    // check code is getting or not?
     if (!code) {
       return res.status(400).json({ success: false, message: "Access code is required." });
     }
-    
-    // Check file is present or not in database...
+
     const fileDoc = await FileModel.findOne({ accessCode: code });
     if (!fileDoc) {
       return res.status(404).json({ success: false, message: "File not found with this code." });
     }
 
-    // Get public URL from Supabase
-    const { data, error } = await supabase.storage
-      .from("croma")
-      .getPublicUrl(fileDoc.path);
+    const filePath = fileDoc.path;
+    const fileName = fileDoc.filename;
+    const mimeType = fileDoc.contentType || "application/octet-stream";
 
-    // check for errors..
-    if (error) {
-      return res.status(500).json({ success: false, message: "Error getting file URL." });
+    const { data: fileBuffer, error } = await supabase.storage
+      .from("croma")
+      .download(filePath);
+
+    if (error || !fileBuffer) {
+      return res.status(404).json({ success: false, message: "File not found in storage." });
     }
 
-    // Delete file from Supabase
-    await supabase.storage.from("croma").remove([fileDoc.path]);
+    const arrayBuffer = await fileBuffer.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const stream = Readable.from(buffer);
 
-    // Delete document from MongoDB
-    await FileModel.deleteOne({ _id: fileDoc._id });
+    res.setHeader("Content-Type", mimeType);
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
 
-    res.status(200).json({
-      success: true,
-      message: "File ready to download. It will be deleted after this.",
-      fileUrl: data.publicUrl,
+    // Cleanup logic after response is fully sent
+    res.on("finish", async () => {
+      try {
+        // 1. Delete from Supabase
+        await supabase.storage.from("croma").remove([filePath]);
+
+        // 2. Delete from MongoDB
+        await FileModel.deleteOne({ _id: fileDoc._id });
+
+        console.log(`File ${fileName} deleted after successful download.`);
+      } catch (cleanupErr) {
+        console.error("Error during file cleanup:", cleanupErr);
+      }
     });
+
+    stream.pipe(res);
+
   } catch (error) {
-    console.error(error);
+    console.error("Download error:", error);
     res.status(500).json({ success: false, message: "Error retrieving file." });
   }
 };
+
 
 
 module.exports = { fileStoreController, fileRetreiveController };

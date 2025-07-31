@@ -7,6 +7,6 @@ const { fileStoreController, fileRetreiveController } = require('../Controllers/
 router.post('/upload-file', upload.single('file'), fileStoreController);
 
 // Get File Route
-router.get('/get-file', fileRetreiveController);
+router.post('/get-file', fileRetreiveController);
 
 module.exports = router;
